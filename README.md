@@ -8,6 +8,13 @@ This library lets you manipulate kicad schematic (and other)  _source_ _files_  
 
 ## Changelog
 
+### 0.3.1
+
+- fix `SymbolPin.location`: `AtValue.rotate90degrees()` stepped clockwise instead of
+  counterclockwise, mirroring computed pin positions for symbols rotated 90/270
+  degrees (regression tests in `tests/test_pin_locations.py`, ground truth from
+  kicad-cli netlists)
+
 ### 0.3.0 (KiCad 10 support, this fork)
 
 - lib_symbol pins: KiCad 8/9/10 write unnamed pins as `""` (KiCad 7 used `"~"`); they are now keyed by pin number instead of colliding, and loading a modern schematic no longer emits `can't parsy` warnings

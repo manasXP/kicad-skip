@@ -37,12 +37,16 @@ class AtValue:
         self._value[2] = setTo
     
     def rotate90degrees(self):
-        
+
         rotation = (self.rotation + 90) % 360
-        
-        new_x = self.y 
-        new_y = -1 * self.x 
-        
+
+        # KiCAD symbol rotation is counterclockwise in the library's
+        # y-up frame: one +90 step maps (x, y) -> (-y, x).
+        # (y, -x) is a clockwise step and mirrors pin locations for
+        # symbols rotated 90/270 degrees.
+        new_x = -1 * self.y
+        new_y = self.x
+
         self._value = [new_x, new_y, rotation]
         
     def rotateTo(self, degrees:int):
