@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kicad-skip"
-version = "0.2.5"
+version = "0.3.0"
 authors = [
   { name="Pat Deegan" },
 ]
-description = "A friendly way to skip the drudgery and manipulate kicad 7+ s-expression schematic, netlist and PCB files"
+description = "A friendly way to skip the drudgery and manipulate KiCad 7/8/9/10 s-expression schematic, netlist and PCB files"
 readme = "README.md"
 requires-python = ">=3.8"
 classifiers = [
@@ -23,3 +23,7 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/psychogenic/kicad-skip"
 Issues = "https://github.com/psychogenic/kicad-skip/issues"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
