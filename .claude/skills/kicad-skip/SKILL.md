@@ -18,14 +18,13 @@ description: Programmatically edit KiCad schematic (.kicad_sch) and PCB (.kicad_
 
 ## Environment
 
-- **Python venv** (kicad-skip 0.2.5 + kicad-sch-api installed):
-  `/Users/manaspradhan/Desktop/Design-Studio/KiCAD/.venv/bin/python`
-- **kicad-cli** (v10.x): `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`
-- If working outside that project, check `python -c "import skip"` and `pip install kicad-skip` if missing.
+- **Python** with kicad-skip installed — check `python -c "import skip"` and `pip install kicad-skip` if missing (use the project's venv if it has one).
+- **kicad-cli** — macOS: `/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli`; Linux: usually `kicad-cli` on PATH; Windows: `C:\Program Files\KiCad\<ver>\bin\kicad-cli.exe`.
 
 ```bash
-VENV=/Users/manaspradhan/Desktop/Design-Studio/KiCAD/.venv/bin/python
-KICAD_CLI=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
+VENV=python3                # or path/to/.venv/bin/python
+KICAD_CLI=kicad-cli         # or the macOS/Windows path above
+SKIP_TOOL=<path-to-this-skill>/scripts/skip_tool.py
 ```
 
 ## Helper Script
@@ -33,14 +32,14 @@ KICAD_CLI=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
 `scripts/skip_tool.py` covers the common operations without writing ad-hoc code. It **always creates a timestamped `.bak` before writing**.
 
 ```bash
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py list board.kicad_sch
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py props board.kicad_sch U1
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py set-prop board.kicad_sch --ref R5 MPN RC0805FR-0710KL
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py set-prop board.kicad_sch --match-ref 'R\d+' Tolerance 1%
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py set-prop board.kicad_sch --match-value '100nF' LCSC C49678
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py connectivity board.kicad_sch U1
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py bom board.kicad_sch          # grouped BOM as JSON
-$VENV ~/.claude/skills/kicad-skip/scripts/skip_tool.py erc board.kicad_sch          # kicad-cli ERC + summary
+$VENV $SKIP_TOOL list board.kicad_sch
+$VENV $SKIP_TOOL props board.kicad_sch U1
+$VENV $SKIP_TOOL set-prop board.kicad_sch --ref R5 MPN RC0805FR-0710KL
+$VENV $SKIP_TOOL set-prop board.kicad_sch --match-ref 'R\d+' Tolerance 1%
+$VENV $SKIP_TOOL set-prop board.kicad_sch --match-value '100nF' LCSC C49678
+$VENV $SKIP_TOOL connectivity board.kicad_sch U1
+$VENV $SKIP_TOOL bom board.kicad_sch          # grouped BOM as JSON
+$VENV $SKIP_TOOL erc board.kicad_sch          # kicad-cli ERC + summary
 ```
 
 For anything beyond these, write inline Python (`$VENV - <<'EOF' ... EOF`) using the API below. Full cheatsheet: `references/api-reference.md`.
@@ -119,8 +118,6 @@ kicad-skip can only `clone()` symbols already present; kicad-sch-api corrupts ex
 After every batch of edits, validate before declaring success:
 
 ```bash
-KICAD_CLI=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
-
 # 1. ERC — must not introduce new errors
 $KICAD_CLI sch erc board.kicad_sch -o /tmp/erc.json --format json --severity-error
 python3 -c "import json;r=json.load(open('/tmp/erc.json'));print(sum(len(s['violations']) for s in r['sheets']),'violations')"
@@ -149,13 +146,13 @@ The highest-value combo: read the design with kicad-skip → source parts via di
 1. **Extract** unique Value+Footprint groups:
    `skip_tool.py bom board.kicad_sch` → JSON groups with refs, value, footprint, existing MPN/LCSC.
 2. **Source** each group:
-   - DigiKey (primary, prototypes): `digikey` skill — keyword search, pricing, stock, datasheet PDFs. Credentials in `~/.config/secrets.env`.
+   - DigiKey (primary, prototypes): `digikey` skill — keyword search, pricing, stock, datasheet PDFs (requires DigiKey API credentials).
    - Mouser (secondary): `mouser` skill — when DigiKey lacks stock or for price comparison.
    - LCSC (production / JLCPCB assembly): `lcsc` skill — get `Cxxxxx` numbers, prefer Basic parts (no setup fee per `jlcpcb` skill).
 3. **Write back** with `set-prop` (batch by value match):
    ```bash
-   $VENV scripts/skip_tool.py set-prop board.kicad_sch --match-value '^100nF$' LCSC C1525
-   $VENV scripts/skip_tool.py set-prop board.kicad_sch --ref U1 MPN STM32G030F6P6
+   $VENV $SKIP_TOOL set-prop board.kicad_sch --match-value '^100nF$' LCSC C1525
+   $VENV $SKIP_TOOL set-prop board.kicad_sch --ref U1 MPN STM32G030F6P6
    ```
    Property name conventions (match `bom` skill): `MPN`, `Manufacturer`, `LCSC`, `Digikey`, `Mouser`, `Tolerance`.
 4. **Verify**: re-run `bom` subcommand; confirm every in-BOM, non-DNP group has an MPN or LCSC number.
