@@ -199,9 +199,13 @@ class NamedElementCollection(ElementCollection):
     
     def _cleanse_key(self, key:str):
         if key is None or not len(key):
-            log.warn(f"Passed key {key} -- can't parsy")
-            return '_deadbeef'
-        
+            # unnamed element: generate a unique placeholder key rather
+            # than letting entries collide/shadow each other
+            self._unnamed_counter = getattr(self, '_unnamed_counter', 0) + 1
+            key = f'_unnamed_{self._unnamed_counter}'
+            log.debug(f'Unnamed element in collection, using key {key}')
+            return key
+
         key = key.replace('~', 'n')
         key = self.NamePrefixEliminatorRegex.sub('', key)
         key = self.NameMetaEliminatorRegex.sub('', key)

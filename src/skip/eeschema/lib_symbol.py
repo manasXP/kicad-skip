@@ -37,16 +37,17 @@ class LibSymbolsListWrapper(NamedElementCollection):
     def __contains__(self, key):
         return key in self._libsyms_by_id
     
-    def __getitem__(self, key:int):
+    def __getitem__(self, key):
         '''
-            syms by id
+            syms by id, or plain list index so iteration works
         '''
         if key in self._libsyms_by_id:
             return self._libsyms_by_id[key]
-        
-        
+        if isinstance(key, (int, slice)):
+            return self._elements[key]
+
         raise AttributeError(f'No {key} here')
-    
+
     def property_changed(self, name:str, to_value:str, from_value:str):
         return # nothing to do
 
@@ -110,7 +111,8 @@ class LibSymbolPin(Pin):
 
 class LibSymbolElementWithPins(NamedElementCollection):
     def __init__(self, parent, elements:list):
-        super().__init__(parent, elements, lambda lspin: lspin.number.value if lspin.name.value == '~' else lspin.name.value)
+        # KiCAD 7 wrote unnamed pins as "~"; KiCAD 8/9/10 write ""
+        super().__init__(parent, elements, lambda lspin: lspin.number.value if lspin.name.value in ('~', '') else lspin.name.value)
         
 
 class LibSymbol(SymbolBase):

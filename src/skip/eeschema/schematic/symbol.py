@@ -190,14 +190,28 @@ class Symbol(SymbolBase):
     
     def setAllReferences(self, toValue:str):
         '''
-            Set all references, both the 
+            Set all references, both the
             property.Reference
-            and the annoying instances.project[*].path.reference values 
+            and the annoying instances.project[*].path.reference values
         '''
         self.property.Reference.value = toValue
         if hasattr(self, 'instances'):
             for ref in self.instances.getElementsByEntityType('reference'):
                 ref.value = toValue
+
+    def on_property_changed(self, name:str, to_value:str, from_value:str):
+        '''
+            Keep the (instances (project (path (reference ...)))) section
+            in sync when the Reference property changes -- KiCAD 8/9/10
+            duplicate the reference there, and a clone()d symbol would
+            otherwise keep its donor's reference in instances.
+        '''
+        if name != 'Reference':
+            return
+        if hasattr(self, 'instances'):
+            for ref in self.instances.getElementsByEntityType('reference'):
+                if ref.value == from_value:
+                    ref.value = to_value
                 
     @property
     def is_power(self):
