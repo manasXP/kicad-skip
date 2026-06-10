@@ -19,8 +19,8 @@ class FootprintCollection(NamedElementCollection):
 
     '''
     def __init__(self, parent, elements:list):
-        super().__init__(parent, elements, 
-                         lambda s: s.Reference.value)
+        super().__init__(parent, elements,
+                         lambda s: s.Reference.value if s.Reference is not None else '')
     
     @classmethod 
     def name_for(cls, element):
@@ -48,9 +48,10 @@ class FootprintCollection(NamedElementCollection):
         return list(filter(lambda s: re.match(regex, s.Value.value), self))
 
     def property_changed(self, name:str, to_value:str, from_value:str):
-        if name != 'reference':
-            return 
-        
+        # 'reference' for fp_text-era boards, 'Reference' for KiCAD 8+ properties
+        if name.lower() != 'reference':
+            return
+
         self.elementRename(from_value, to_value)
 
 
@@ -67,28 +68,35 @@ class FootprintWrapper(ElementWithPropertiesWrapper):
     def __init__(self, pv:ParsedValue):
         super().__init__(pv)
         
+        # KiCAD <8 boards keep Reference/Value in (fp_text ...) entries;
+        # KiCAD 8/9/10 boards use (property ...) elements instead, so
+        # fp_text may be entirely absent
         footprint_text = []
-        for fptxt in pv.fp_text:
+        for fptxt in pv.getElementsByEntityType('fp_text'):
             footprint_text.append(FootprintText(fptxt))
-        
+
         self.fp_text = NamedElementCollection(self, footprint_text, lambda fptxt: fptxt.name)
         
         self._layer_handler = LayerPropertyHandler(pv.layer, self.parent)
 
         
         
-    @property 
+    @property
     def Reference(self):
         if 'reference' in self.fp_text:
-            return self.fp_text.reference 
-        
+            return self.fp_text.reference
+        if 'Reference' in self.property:
+            return self.property.Reference
+
         return None
-        
-    @property 
+
+    @property
     def Value(self):
         if 'value' in self.fp_text:
             return self.fp_text.value
-        
+        if 'Value' in self.property:
+            return self.property.Value
+
         
     @property
     def layer(self):

@@ -4,6 +4,20 @@ Copyright &copy; 2024 Pat Deegan, [psychogenic.com](https://psychogenic.com/)
 
 This library lets you manipulate kicad schematic (and other)  _source_ _files_  with Python, simply.
 
+**Supported KiCad versions: 7, 8, 9 and 10** (schematic format up to `20260306`, board format up to `20260206`).
+
+## Changelog
+
+### 0.3.0 (KiCad 10 support, this fork)
+
+- lib_symbol pins: KiCad 8/9/10 write unnamed pins as `""` (KiCad 7 used `"~"`); they are now keyed by pin number instead of colliding, and loading a modern schematic no longer emits `can't parsy` warnings
+- unnamed collection entries get unique `_unnamed_N` keys instead of all shadowing each other under `_deadbeef`
+- `new()` element templates (wire, label, global_label, text, junction) regenerated from canonical KiCad 10 output: quoted uuid strings, `(fields_autoplaced yes)`, `(hide yes)`, `(exclude_from_sim no)` on text, `(show_name no)`/`(do_not_autoplace no)` on global_label properties
+- PCB: footprints without `fp_text` entries (KiCad 8+ store Reference/Value as `property`) no longer crash on load; `Footprint.Reference`/`.Value` fall back to properties
+- changing a symbol's Reference property now also syncs the KiCad 8+ `(instances ...)` references (important after `clone()`)
+- `lib_symbols` collection supports plain integer indexing/iteration
+- test suite (`tests/`) with KiCad 10 fixtures: semantic round-trip diff, load-warning, mutation and `kicad-cli` ERC/DRC/netlist validation gates
+
 At a minimum it presents a usable interface to the s-expression structure to add or modify data, but 
 it also does a lot behind the scenes to make both scripting and exploration using the REPL shell
 efficient and enjoyable.

@@ -1,5 +1,5 @@
 '''
-Library to parse and manipulate Kicad 7+ (skip) kicad_sch/kicad_pcb schematic and layout files.
+Library to parse and manipulate KiCad 7/8/9/10 (skip) kicad_sch/kicad_pcb schematic and layout files.
 
 Example usage: Simply create a schematic object by loading a file
 
@@ -56,6 +56,6 @@ Created on Jan 29, 2024
 @copyright: Copyright (C) 2024 Pat Deegan, https://psychogenic.com
 
 '''
-VERSION='0.2.2'
+VERSION='0.3.0'
 from skip.eeschema.schematic import Schematic, Symbol
 from skip.pcbnew.pcb import PCB 

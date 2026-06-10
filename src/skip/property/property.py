@@ -35,6 +35,10 @@ class PropertyCollection(NamedElementCollection):
         
     
     def property_changed(self, name:str, to_value:str, from_value:str):
+        # give the owning element first dibs (e.g. symbols sync their
+        # (instances ...) references, KiCAD 8+)
+        if hasattr(self.parent, 'on_property_changed'):
+            self.parent.on_property_changed(name, to_value, from_value)
         self.parent.container.property_changed(name, to_value, from_value)
 
 class PropertyString(ArbitraryNamedParsedValueWrapper):
